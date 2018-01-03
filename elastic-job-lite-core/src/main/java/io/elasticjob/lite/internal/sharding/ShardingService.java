@@ -100,21 +100,29 @@ public final class ShardingService {
      * </p>
      */
     public void shardingIfNecessary() {
+        //获取可分片的实例
         List<JobInstance> availableJobInstances = instanceService.getAvailableJobInstances();
+        //如果可分片实例为空或者不需要分片则返回
         if (!isNeedSharding() || availableJobInstances.isEmpty()) {
             return;
         }
+        //不是主节点的等待分片完成
         if (!leaderService.isLeaderUntilBlock()) {
             blockUntilShardingCompleted();
             return;
         }
+        //等待其它节点执行完成
         waitingOtherShardingItemCompleted();
         LiteJobConfiguration liteJobConfig = configService.load(false);
         int shardingTotalCount = liteJobConfig.getTypeConfig().getCoreConfig().getShardingTotalCount();
         log.debug("Job '{}' sharding begin.", jobName);
+        //标识为分片中
         jobNodeStorage.fillEphemeralJobNode(ShardingNode.PROCESSING, "");
+        //重置分片
         resetShardingInfo(shardingTotalCount);
+        //获取到分片策略,默认平均算法
         JobShardingStrategy jobShardingStrategy = JobShardingStrategyFactory.getStrategy(liteJobConfig.getJobShardingStrategyClass());
+        //写入分片结果  zk的key为/jobName/sharding/%s/instance,%s为分片结果如1,zk的value为jobId
         jobNodeStorage.executeInTransaction(new PersistShardingInfoTransactionExecutionCallback(jobShardingStrategy.sharding(availableJobInstances, jobName, shardingTotalCount)));
         log.debug("Job '{}' sharding complete.", jobName);
     }
@@ -132,7 +140,11 @@ public final class ShardingService {
             BlockUtils.waitingShortTime();
         }
     }
-    
+
+    /***
+     * 重置分片信息,如之前分片是10,后面设置成5,实际分片数大于总分片数,需把5之后的节点删除
+     * @param shardingTotalCount
+     */
     private void resetShardingInfo(final int shardingTotalCount) {
         for (int i = 0; i < shardingTotalCount; i++) {
             jobNodeStorage.removeJobNodeIfExisted(ShardingNode.getInstanceNode(i));

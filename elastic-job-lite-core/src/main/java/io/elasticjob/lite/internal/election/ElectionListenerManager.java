@@ -54,7 +54,9 @@ public final class ElectionListenerManager extends AbstractListenerManager {
     
     @Override
     public void start() {
+        //监听主节点,如果主节点crashed或不存,当前节点非禁用则发起选举
         addDataListener(new LeaderElectionJobListener());
+        //监听主节点,如果主节点禁用则删除主节点供重新选举
         addDataListener(new LeaderAbdicationJobListener());
     }
     
@@ -66,11 +68,23 @@ public final class ElectionListenerManager extends AbstractListenerManager {
                 leaderService.electLeader();
             }
         }
-        
+
+        /***
+         * 如果主节点不存在,且本节点是非禁用状态
+         * @param path
+         * @param data
+         * @return
+         */
         private boolean isActiveElection(final String path, final String data) {
             return !leaderService.hasLeader() && isLocalServerEnabled(path, data);
         }
-        
+
+        /***
+         * 如果主节点crashed 且当前节点可用
+         * @param path
+         * @param eventType
+         * @return
+         */
         private boolean isPassiveElection(final String path, final Type eventType) {
             return isLeaderCrashed(path, eventType) && serverService.isAvailableServer(JobRegistry.getInstance().getJobInstance(jobName).getIp());
         }

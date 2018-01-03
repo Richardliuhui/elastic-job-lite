@@ -110,10 +110,15 @@ public final class SchedulerFacade {
      * @param enabled 作业是否启用
      */
     public void registerStartUpInfo(final boolean enabled) {
+        //开启所有监听
         listenerManager.startAllListeners();
+        //选举主节点,主节点用来分片等操作 /leader/election/latch
         leaderService.electLeader();
+        //server上线  /jobName/servers/ip
         serverService.persistOnline(enabled);
+        //节点实例上线  /jobName/instances/ip@-@pid
         instanceService.persistOnline();
+        //设置分片标志 /leader/sharding/necessary
         shardingService.setReshardingFlag();
         monitorService.listen();
         if (!reconcileService.isRunning()) {
@@ -125,6 +130,7 @@ public final class SchedulerFacade {
      * 终止作业调度.
      */
     public void shutdownInstance() {
+        //移除主节点
         if (leaderService.isLeader()) {
             leaderService.removeLeader();
         }
@@ -132,6 +138,7 @@ public final class SchedulerFacade {
         if (reconcileService.isRunning()) {
             reconcileService.stopAsync();
         }
+        //如果是主节点清除主节点,清除这些schedulerMap,regCenterMap,jobInstanceMap,jobRunningMap,currentShardingTotalCountMap
         JobRegistry.getInstance().shutdown(jobName);
     }
 }

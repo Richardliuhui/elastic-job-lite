@@ -62,7 +62,9 @@ public final class FailoverListenerManager extends AbstractListenerManager {
     
     @Override
     public void start() {
+        //添加job crashed 监听
         addDataListener(new JobCrashedJobListener());
+        //添加移除failover属性配置监听
         addDataListener(new FailoverSettingsChangedJobListener());
     }
     
@@ -83,7 +85,9 @@ public final class FailoverListenerManager extends AbstractListenerManager {
                 List<Integer> failoverItems = failoverService.getFailoverItems(jobInstanceId);
                 if (!failoverItems.isEmpty()) {
                     for (int each : failoverItems) {
+                        //设置 /jobname/leader/failover/item
                         failoverService.setCrashedFailoverFlag(each);
+                        //发起failover选举
                         failoverService.failoverIfNecessary();
                     }
                 } else {

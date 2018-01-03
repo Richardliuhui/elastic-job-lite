@@ -33,19 +33,36 @@ import lombok.RequiredArgsConstructor;
 public final class LiteJobConfiguration implements JobRootConfiguration {
     
     private final JobTypeConfiguration typeConfig;
-    
+    /***
+     * 监控作业运行时状态
+     */
     private final boolean monitorExecution;
-    
+    /***
+     * 最大允许的本机与注册中心的时间误差秒数
+     *  如果时间误差超过配置秒数则作业启动时将抛异常
+     * 配置为-1表示不校验时间误差
+     */
     private final int maxTimeDiffSeconds;
-    
+    /***
+     * 监控端口
+     */
     private final int monitorPort;
-    
+    /***
+     * 分片策略类
+     */
     private final String jobShardingStrategyClass;
-    
+    /***
+     * 修复作业服务器不一致状态服务调度间隔时间，配置为小于1的任意值表示不执行修复
+     * 单位：分钟
+     */
     private final int reconcileIntervalMinutes;
-    
+    /**
+     * 是否禁用
+     */
     private final boolean disabled;
-    
+    /***
+     * 是否覆盖zk
+     */
     private final boolean overwrite;
     
     /**

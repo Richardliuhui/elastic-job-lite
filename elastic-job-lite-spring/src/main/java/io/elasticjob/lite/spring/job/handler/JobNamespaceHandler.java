@@ -31,8 +31,11 @@ public final class JobNamespaceHandler extends NamespaceHandlerSupport {
     
     @Override
     public void init() {
+        //simple类型解析及初始化
         registerBeanDefinitionParser("simple", new SimpleJobBeanDefinitionParser());
+        //dataflow类型解析初始化
         registerBeanDefinitionParser("dataflow", new DataflowJobBeanDefinitionParser());
+        //script类型解析初始化
         registerBeanDefinitionParser("script", new ScriptJobBeanDefinitionParser());
     }
 }

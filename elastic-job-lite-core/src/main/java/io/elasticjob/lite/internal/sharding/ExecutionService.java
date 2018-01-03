@@ -58,6 +58,7 @@ public final class ExecutionService {
         if (!configService.load(true).isMonitorExecution()) {
             return;
         }
+        //写入running,表示正在执行中
         for (int each : shardingContexts.getShardingItemParameters().keySet()) {
             jobNodeStorage.fillEphemeralJobNode(ShardingNode.getRunningNode(each), "");
         }

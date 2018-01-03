@@ -55,7 +55,9 @@ public final class ShardingListenerManager extends AbstractListenerManager {
     
     @Override
     public void start() {
+        //分片监听,如果本地分片与ZK的分片不一致,则设置分片标识
         addDataListener(new ShardingTotalCountChangedJobListener());
+        //新增实例如减少实例设置分片标识
         addDataListener(new ListenServersChangedJobListener());
     }
     

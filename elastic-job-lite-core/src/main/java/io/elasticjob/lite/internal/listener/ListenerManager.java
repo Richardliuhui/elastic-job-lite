@@ -75,10 +75,14 @@ public final class ListenerManager {
      * 开启所有监听器.
      */
     public void startAllListeners() {
+        //开启选举监听
         electionListenerManager.start();
+        //分片监听
         shardingListenerManager.start();
+        //failover监听
         failoverListenerManager.start();
         monitorExecutionListenerManager.start();
+        //shutdown监听
         shutdownListenerManager.start();
         triggerListenerManager.start();
         rescheduleListenerManager.start();

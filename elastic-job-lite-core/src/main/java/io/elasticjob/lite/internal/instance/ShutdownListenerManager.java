@@ -56,6 +56,7 @@ public final class ShutdownListenerManager extends AbstractListenerManager {
         
         @Override
         protected void dataChanged(final String path, final Type eventType, final String data) {
+            //任务调度非终止且不是暂停,当前实例移除事件,非注册中心重连,则终止作业调度
             if (!JobRegistry.getInstance().isShutdown(jobName) && !JobRegistry.getInstance().getJobScheduleController(jobName).isPaused()
                     && isRemoveInstance(path, eventType) && !isReconnectedRegistryCenter()) {
                 schedulerFacade.shutdownInstance();

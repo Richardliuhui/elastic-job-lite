@@ -100,10 +100,12 @@ public abstract class AbstractElasticJobExecutor {
         } catch (final JobExecutionEnvironmentException cause) {
             jobExceptionHandler.handleException(jobName, cause);
         }
+        //获取分片context(分片功能也在里面)
         ShardingContexts shardingContexts = jobFacade.getShardingContexts();
         if (shardingContexts.isAllowSendJobEvent()) {
             jobFacade.postJobStatusTraceEvent(shardingContexts.getTaskId(), State.TASK_STAGING, String.format("Job '%s' execute begin.", jobName));
         }
+        //如果当前分片项仍在运行则设置任务被错过执行的标记.
         if (jobFacade.misfireIfRunning(shardingContexts.getShardingItemParameters().keySet())) {
             if (shardingContexts.isAllowSendJobEvent()) {
                 jobFacade.postJobStatusTraceEvent(shardingContexts.getTaskId(), State.TASK_FINISHED, String.format(
@@ -119,11 +121,13 @@ public abstract class AbstractElasticJobExecutor {
             //CHECKSTYLE:ON
             jobExceptionHandler.handleException(jobName, cause);
         }
+        //执行
         execute(shardingContexts, JobExecutionEvent.ExecutionSource.NORMAL_TRIGGER);
         while (jobFacade.isExecuteMisfired(shardingContexts.getShardingItemParameters().keySet())) {
             jobFacade.clearMisfire(shardingContexts.getShardingItemParameters().keySet());
             execute(shardingContexts, JobExecutionEvent.ExecutionSource.MISFIRE);
         }
+        //是否需要失效转移
         jobFacade.failoverIfNecessary();
         try {
             jobFacade.afterJobExecuted(shardingContexts);
@@ -141,6 +145,7 @@ public abstract class AbstractElasticJobExecutor {
             }
             return;
         }
+        //注册作业正在执行中
         jobFacade.registerJobBegin(shardingContexts);
         String taskId = shardingContexts.getTaskId();
         if (shardingContexts.isAllowSendJobEvent()) {
@@ -165,12 +170,14 @@ public abstract class AbstractElasticJobExecutor {
     
     private void process(final ShardingContexts shardingContexts, final JobExecutionEvent.ExecutionSource executionSource) {
         Collection<Integer> items = shardingContexts.getShardingItemParameters().keySet();
+        //如果只有一个分片则直接执行
         if (1 == items.size()) {
             int item = shardingContexts.getShardingItemParameters().keySet().iterator().next();
             JobExecutionEvent jobExecutionEvent =  new JobExecutionEvent(shardingContexts.getTaskId(), jobName, executionSource, item);
             process(shardingContexts, item, jobExecutionEvent);
             return;
         }
+        //多个分片用多线程执行
         final CountDownLatch latch = new CountDownLatch(items.size());
         for (final int each : items) {
             final JobExecutionEvent jobExecutionEvent = new JobExecutionEvent(shardingContexts.getTaskId(), jobName, executionSource, each);

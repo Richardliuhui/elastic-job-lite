@@ -79,6 +79,7 @@ public class JobScheduler {
     }
     
     private JobScheduler(final CoordinatorRegistryCenter regCenter, final LiteJobConfiguration liteJobConfig, final JobEventBus jobEventBus, final ElasticJobListener... elasticJobListeners) {
+        //添加job实例到JobRegistry的jobInstanceMap
         JobRegistry.getInstance().addJobInstance(liteJobConfig.getJobName(), new JobInstance());
         this.liteJobConfig = liteJobConfig;
         this.regCenter = regCenter;
@@ -102,11 +103,14 @@ public class JobScheduler {
      */
     public void init() {
         LiteJobConfiguration liteJobConfigFromRegCenter = schedulerFacade.updateJobConfiguration(liteJobConfig);
+        //设置总的分片数
         JobRegistry.getInstance().setCurrentShardingTotalCount(liteJobConfigFromRegCenter.getJobName(), liteJobConfigFromRegCenter.getTypeConfig().getCoreConfig().getShardingTotalCount());
         JobScheduleController jobScheduleController = new JobScheduleController(
                 createScheduler(), createJobDetail(liteJobConfigFromRegCenter.getTypeConfig().getJobClass()), liteJobConfigFromRegCenter.getJobName());
         JobRegistry.getInstance().registerJob(liteJobConfigFromRegCenter.getJobName(), jobScheduleController, regCenter);
+        //注册作业启动,包括选举,持久化作业服务器上线,开启所有监听器
         schedulerFacade.registerStartUpInfo(!liteJobConfigFromRegCenter.isDisabled());
+        //调度作业
         jobScheduleController.scheduleJob(liteJobConfigFromRegCenter.getTypeConfig().getCoreConfig().getCron());
     }
     
