@@ -138,7 +138,9 @@ public final class SchedulerFacade {
         if (reconcileService.isRunning()) {
             reconcileService.stopAsync();
         }
-        //如果是主节点清除主节点,清除这些schedulerMap,regCenterMap,jobInstanceMap,jobRunningMap,currentShardingTotalCountMap
+        //如果是主节点清除主节点,清除这些schedulerMap,regCenterMap,jobInstanceMap,
+        // jobRunningMap,currentShardingTotalCountMap
+        //关闭quartz调度
         JobRegistry.getInstance().shutdown(jobName);
     }
 }

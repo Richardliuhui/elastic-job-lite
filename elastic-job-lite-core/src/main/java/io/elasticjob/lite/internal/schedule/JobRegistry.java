@@ -165,6 +165,7 @@ public final class JobRegistry {
     public void shutdown(final String jobName) {
         JobScheduleController scheduleController = schedulerMap.remove(jobName);
         if (null != scheduleController) {
+            //关闭quartz调度
             scheduleController.shutdown();
         }
         CoordinatorRegistryCenter regCenter = regCenterMap.remove(jobName);

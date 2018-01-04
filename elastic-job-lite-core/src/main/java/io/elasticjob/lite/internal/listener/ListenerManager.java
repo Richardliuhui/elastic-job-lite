@@ -81,12 +81,15 @@ public final class ListenerManager {
         shardingListenerManager.start();
         //failover监听
         failoverListenerManager.start();
+        //监听配置属性,如果isMonitor=false,则清除running结点
         monitorExecutionListenerManager.start();
-        //shutdown监听
+        //shutdown监听,关闭quartz调度
         shutdownListenerManager.start();
         triggerListenerManager.start();
+        //cron表达式修改监听
         rescheduleListenerManager.start();
         guaranteeListenerManager.start();
+        //添加zk连接监听,如果zk失去连接,所有job暂停执行,重连后恢复运行
         jobNodeStorage.addConnectionStateListener(regCenterConnectionStateListener);
     }
 }

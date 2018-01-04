@@ -110,15 +110,17 @@ public class JobScheduler {
         JobRegistry.getInstance().registerJob(liteJobConfigFromRegCenter.getJobName(), jobScheduleController, regCenter);
         //注册作业启动,包括选举,持久化作业服务器上线,开启所有监听器
         schedulerFacade.registerStartUpInfo(!liteJobConfigFromRegCenter.isDisabled());
-        //调度作业
+        //quartz调度作业
         jobScheduleController.scheduleJob(liteJobConfigFromRegCenter.getTypeConfig().getCoreConfig().getCron());
     }
     
     private JobDetail createJobDetail(final String jobClass) {
         JobDetail result = JobBuilder.newJob(LiteJob.class).withIdentity(liteJobConfig.getJobName()).build();
+        //设置Job参数jobFacade
         result.getJobDataMap().put(JOB_FACADE_DATA_MAP_KEY, jobFacade);
         Optional<ElasticJob> elasticJobInstance = createElasticJobInstance();
         if (elasticJobInstance.isPresent()) {
+            //设置Job参数elasticJob
             result.getJobDataMap().put(ELASTIC_JOB_DATA_MAP_KEY, elasticJobInstance.get());
         } else if (!jobClass.equals(ScriptJob.class.getCanonicalName())) {
             try {

@@ -96,6 +96,7 @@ public abstract class AbstractElasticJobExecutor {
      */
     public final void execute() {
         try {
+            //检查本机与注册中心的时间误差秒数是否在允许范围
             jobFacade.checkJobExecutionEnvironment();
         } catch (final JobExecutionEnvironmentException cause) {
             jobExceptionHandler.handleException(jobName, cause);
@@ -123,6 +124,7 @@ public abstract class AbstractElasticJobExecutor {
         }
         //执行
         execute(shardingContexts, JobExecutionEvent.ExecutionSource.NORMAL_TRIGGER);
+        //错过的任务重新执行
         while (jobFacade.isExecuteMisfired(shardingContexts.getShardingItemParameters().keySet())) {
             jobFacade.clearMisfire(shardingContexts.getShardingItemParameters().keySet());
             execute(shardingContexts, JobExecutionEvent.ExecutionSource.MISFIRE);
@@ -145,7 +147,7 @@ public abstract class AbstractElasticJobExecutor {
             }
             return;
         }
-        //注册作业正在执行中
+        //如果有配置isMonitor,则写入zk /jobName/sharding/0/running 标识作业正在执行中
         jobFacade.registerJobBegin(shardingContexts);
         String taskId = shardingContexts.getTaskId();
         if (shardingContexts.isAllowSendJobEvent()) {
